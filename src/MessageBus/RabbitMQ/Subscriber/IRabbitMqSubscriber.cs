@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using MessageBus.RabbitMQ.Events;
 
-namespace MessageBus.RabbitMQ.Subscriber
+namespace MessageBus.RabbitMQ.Subscriber;
+
+public interface IRabbitMqSubscriber
 {
-    public interface IRabbitMqSubscriber
-    {
-
-    }
+    void Subscribe<T>(IEventHandler<T> handler);
 }
