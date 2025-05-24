@@ -1,0 +1,40 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"     # default port comunication
+      - "15672:15672"   # default port Dashboard
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq 
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  orderservice-api:
+    build:
+      context: .
+      dockerfile: src/OrderService/Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development 
+      - RABBITMQ_CONNECTIONSTRING=amqp://guest:guest@rabbitmq:5672
+
+    restart: unless-stopped 
+
+  # paymentserviceworker:
+  #   build:
+  #     context: ./src/PaymentService/Worker
+  #   depends_on:
+  #     - rabbitmq
+# volumes para persistência
+volumes:
+  rabbitmq-data:

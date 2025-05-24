@@ -1,13 +1,18 @@
 using Application.Order.Events;
 using MessageBus.RabbitMQ.Events;
+using MediatR;
+using Application.Order.Commands;
 
 namespace Application.Order.EventHandlers;
 
-public class ApprovedPaymentEventHandler : IEventHandler<ApprovedPaymentEvent>
+public class PaymentRejectedEventHandler(IMediator mediator) : IEventHandler<PaymentRejectedEvent>
 {
-    public Task HandleAsync(ApprovedPaymentEvent @event)
+    private readonly IMediator _mediator = mediator;
+
+    public async Task HandleAsync(PaymentRejectedEvent @event)
     {
-        Console.WriteLine($"Pedido {@event.OrderId} pago com sucesso!");
-        return Task.CompletedTask;
+        Console.WriteLine($"Pagamento rejeitado para pedido {@event.OrderId}, motivo: {@event.Note}");
+        await _mediator.Send(new CancelOrderCommand(@event.OrderId, @event.Note));
     }
 }
+

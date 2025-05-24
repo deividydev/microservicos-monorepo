@@ -8,7 +8,8 @@ public static class RabbitMqExtensions
 {
     public static IServiceCollection AddRabbitMqMessaging(this IServiceCollection services)
     {
-        var connectionString = "amqp://guest:guest@localhost:5672"; // Ajuste conforme seu RabbitMQ
+        var connectionString = Environment.GetEnvironmentVariable("RABBITMQ_CONNECTIONSTRING")
+                               ?? "amqp://guest:guest@localhost:5672";
 
         services.AddSingleton(new RabbitMqPublisher(connectionString));
         services.AddSingleton(new RabbitMqSubscriber(connectionString));

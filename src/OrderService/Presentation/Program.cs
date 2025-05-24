@@ -1,4 +1,5 @@
 using System.Reflection;
+using Application.Order.EventHandlers;
 using Application.Order.Events;
 using MessageBus.RabbitMQ.Events;
 using MessageBus.RabbitMQ.Extensions;
@@ -9,6 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 var applicationAssembly = Assembly.Load("Application");
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
+
+builder.Services.AddSingleton<IEventHandler<ApprovedPaymentEvent>, ApprovedPaymentEventHandler>();
+builder.Services.AddSingleton<IEventHandler<PaymentRejectedEvent>, PaymentRejectedEventHandler>();
 
 builder.Services.AddRabbitMqMessaging();
 
