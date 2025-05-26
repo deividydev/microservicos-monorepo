@@ -18,26 +18,51 @@ public class RabbitMqSubscriber : IRabbitMqSubscriber
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
 
-        _channel.ExchangeDeclare(exchange: _exchange, type: ExchangeType.Fanout);
+        _channel.ExchangeDeclare(exchange: _exchange, type: ExchangeType.Direct);
     }
 
     public void Subscribe<T>(IEventHandler<T> handler)
     {
-        var queueName = _channel.QueueDeclare().QueueName;
-        _channel.QueueBind(queue: queueName, exchange: _exchange, routingKey: "");
-
-        var consumer = new AsyncEventingBasicConsumer(_channel);
-        consumer.Received += async (model, ea) =>
+        try
         {
-            var body = ea.Body.ToArray();
-            var message = JsonSerializer.Deserialize<T>(Encoding.UTF8.GetString(body));
+            var queueName = $"queue_{typeof(T).Name.ToLower()}";
+            var routingKey = typeof(T).Name;
 
-            if (message != null)
-                await handler.HandleAsync(message);
+            _channel.QueueDeclare(
+                queue: queueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false
+            );
 
-            _channel.BasicAck(ea.DeliveryTag, false);
-        };
+            _channel.QueueBind(queue: queueName, exchange: _exchange, routingKey: routingKey);
 
-        _channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
+            var consumer = new EventingBasicConsumer(_channel);
+            consumer.Received += async (model, ea) =>
+            {
+                try
+                {
+                    var body = ea.Body.ToArray();
+                    var json = Encoding.UTF8.GetString(body);
+
+                    var @event = JsonSerializer.Deserialize<T>(json);
+
+                    if (@event != null)
+                        await handler.HandleAsync(@event);
+
+                    _channel.BasicAck(ea.DeliveryTag, multiple: false);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Subscriber] Erro no handler: {ex}");
+                }
+            };
+
+            _channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Subscriber] Erro ao processar mensagem: {ex}");
+        }
     }
 }

@@ -4,16 +4,20 @@ using Worker.Events;
 
 namespace Worker.EventHandlers;
 
-public class CreatedOrderEventHandler : IEventHandler<CreatedOrderEvent>
+/// <summary>
+/// Handles the <see cref="CreatedOrderEvent"/> to simulate payment processing.
+/// Publishes either an <see cref="ApprovedPaymentEvent"/> or a <see cref="PaymentRejectedEvent"/>.
+/// </summary>
+public class CreatedOrderEventHandler(IRabbitMqPublisher publisher) : IEventHandler<CreatedOrderEvent>
 {
-    private readonly RabbitMqPublisher _publisher;
+    private readonly IRabbitMqPublisher _publisher = publisher;
 
-    public CreatedOrderEventHandler(RabbitMqPublisher publisher)
-    {
-        _publisher = publisher;
-    }
-
-    public Task HandleAsync(CreatedOrderEvent @event)
+    /// <summary>
+    /// Handles the <see cref="CreatedOrderEvent"/> by simulating payment approval or rejection.
+    /// </summary>
+    /// <param name="event">The created order event containing the order ID and value.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public async Task HandleAsync(CreatedOrderEvent @event)
     {
         Console.WriteLine($"Processando pagamento para pedido {@event.OrderId} no valor {@event.Value}");
 
@@ -21,14 +25,12 @@ public class CreatedOrderEventHandler : IEventHandler<CreatedOrderEvent>
 
         if (isApproved)
         {
-            _publisher.Publish(new ApprovedPaymentEvent(@event.OrderId));
+            await _publisher.PublishAsync(new ApprovedPaymentEvent(@event.OrderId));
             Console.WriteLine($"Pagamento aprovado para pedido {@event.OrderId}");
-            return Task.CompletedTask;
+            return;
         }
 
-        _publisher.Publish(new PaymentRejectedEvent(@event.OrderId, "Saldo insuficiente"));
-        Console.WriteLine($"Pagamento rejeitado para pedido {@event.OrderId}");
-
-        return Task.CompletedTask;
+        // await _publisher.PublishAsync(new PaymentRejectedEvent(@event.OrderId, "Saldo insuficiente"));
+        // Console.WriteLine($"Pagamento rejeitado para pedido {@event.OrderId}");
     }
 }

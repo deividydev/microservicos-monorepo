@@ -4,6 +4,7 @@ using Application.Order.Events;
 using MessageBus.RabbitMQ.Events;
 using MessageBus.RabbitMQ.Extensions;
 using MessageBus.RabbitMQ.Subscriber;
+using Presentation.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,10 +23,7 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// result from events 
-var subscriber = app.Services.GetRequiredService<RabbitMqSubscriber>();
-subscriber.Subscribe(app.Services.GetRequiredService<IEventHandler<ApprovedPaymentEvent>>());
-subscriber.Subscribe(app.Services.GetRequiredService<IEventHandler<PaymentRejectedEvent>>());
+app.Services.SubscribeEvents();
 
 if (app.Environment.IsDevelopment())
 {

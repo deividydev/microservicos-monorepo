@@ -16,12 +16,23 @@ public class RabbitMqPublisher : IRabbitMqPublisher
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
 
-        _channel.ExchangeDeclare(exchange: _exchange, type: ExchangeType.Fanout);
+        _channel.ExchangeDeclare(exchange: _exchange, type: ExchangeType.Direct);
     }
 
-    public void Publish<T>(T message)
+    public Task PublishAsync<T>(T message)
     {
-        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
-        _channel.BasicPublish(exchange: _exchange, routingKey: "", basicProperties: null, body: body);
+        try
+        {
+            var routingKey = nameof(T);
+            var json = JsonSerializer.Serialize(message);
+            var body = Encoding.UTF8.GetBytes(json);
+            _channel.BasicPublish(exchange: _exchange, routingKey: routingKey, basicProperties: null, body: body);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Publisher] Erro ao publicar mensagem: {ex}");
+        }
+
+        return Task.CompletedTask;
     }
 }
