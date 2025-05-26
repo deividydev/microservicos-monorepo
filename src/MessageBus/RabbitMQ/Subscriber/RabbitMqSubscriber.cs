@@ -10,7 +10,7 @@ public class RabbitMqSubscriber : IRabbitMqSubscriber
 {
     private readonly IConnection _connection;
     private readonly IModel _channel;
-    private readonly string _exchange = "exchange_saga";
+    private readonly string _exchange = "exchange_saga_direct";
 
     public RabbitMqSubscriber(string rabbitMqConnectionString)
     {
@@ -42,6 +42,7 @@ public class RabbitMqSubscriber : IRabbitMqSubscriber
             {
                 try
                 {
+                    Console.WriteLine($"[Subscriber] Consumindo evento: {routingKey}");
                     var body = ea.Body.ToArray();
                     var json = Encoding.UTF8.GetString(body);
 

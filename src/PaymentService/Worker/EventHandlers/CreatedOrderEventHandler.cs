@@ -30,7 +30,7 @@ public class CreatedOrderEventHandler(IRabbitMqPublisher publisher) : IEventHand
             return;
         }
 
-        // await _publisher.PublishAsync(new PaymentRejectedEvent(@event.OrderId, "Saldo insuficiente"));
-        // Console.WriteLine($"Pagamento rejeitado para pedido {@event.OrderId}");
+        await _publisher.PublishAsync(new PaymentRejectedEvent(@event.OrderId, "Saldo insuficiente"));
+        Console.WriteLine($"Pagamento rejeitado para pedido {@event.OrderId}");
     }
 }
